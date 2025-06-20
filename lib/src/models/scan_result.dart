@@ -15,6 +15,7 @@ class ScanResult {
   ScanResult({
     required this.status,
     required this.data,
+    required this.dataId,
   });
 
   @JsonKey(name: 'status')
@@ -22,6 +23,9 @@ class ScanResult {
 
   @JsonKey(name: 'scanData')
   final String data;
+
+  @JsonKey(name: 'scanDataId')
+  final String dataId;
 
   factory ScanResult.fromJson(Map<String, dynamic> json) =>
       _$ScanResultFromJson(json);

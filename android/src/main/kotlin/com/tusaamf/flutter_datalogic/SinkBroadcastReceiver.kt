@@ -35,10 +35,13 @@ class SinkBroadcastReceiver(private var events: EventSink? = null) : BroadcastRe
             b.getString(DLInterface.EXTRA_KEY_VALUE_SCANNER_STATUS)
         val scanData =
             b.getString(DLInterface.EXTRA_KEY_VALUE_SCAN_DATA)
+        val scanDataId =
+            b.getString(DLInterface.EXTRA_KEY_VALUE_SCAN_DATA_ID)
         val scanResult = JSONObject()
         scanResult.put(MyEvents.EVENT_NAME, MyEvents.SCANNER_INFO)
         scanResult.put("status", status)
         scanResult.put("scanData", scanData)
+        scanResult.put("scanDataId", scanDataId)
 
         events!!.success(scanResult.toString())
     }

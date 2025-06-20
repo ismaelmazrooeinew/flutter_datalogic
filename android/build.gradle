@@ -9,7 +9,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.2'
+        classpath 'com.android.tools.build:gradle:8.1.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -47,6 +47,6 @@ android {
     }
 
     dependencies {
-        implementation 'com.github.datalogic:datalogic-android-sdk:1.32'
+        implementation 'com.github.datalogic:datalogic-android-sdk:1.34'
     }
 }

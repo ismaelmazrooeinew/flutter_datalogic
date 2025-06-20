@@ -19,6 +19,7 @@ class _ExampleAppState extends State<ExampleApp> {
 
   var scannerStatus = ScannerStatusType.IDLE;
   var scannedBarcode = 'Press Scan button on device';
+  var scannedBarcodeId = '';
   bool _hasBeenPressed = false;
 
   @override
@@ -34,6 +35,7 @@ class _ExampleAppState extends State<ExampleApp> {
         setState(() {
           scannerStatus = event.status;
           scannedBarcode = event.data;
+          scannedBarcodeId = event.dataId;
         });
       });
     }
@@ -83,6 +85,13 @@ class _ExampleAppState extends State<ExampleApp> {
             SizedBox(
               height: 16.0,
             ),
+            Text(
+              scannedBarcodeId,
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(
+              height: 16.0,
+            ),
             GestureDetector(
               onTapDown: (_) {
                 startScanning();
@@ -115,13 +124,4 @@ class _ExampleAppState extends State<ExampleApp> {
       ),
     );
   }
-
-// void _scan() {}
-}
-
-class ScanData {
-  ScanData(this.scannerStatus, this.scannedBarcode);
-
-  final ScannerStatusType scannerStatus;
-  final String scannedBarcode;
 }

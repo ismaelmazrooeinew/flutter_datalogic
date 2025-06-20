@@ -42,6 +42,7 @@ class FlutterDatalogicPlugin : FlutterPlugin, MethodCallHandler, EventChannel.St
     private lateinit var intentFilter: IntentFilter
 
     private var scannedBarcode: String = ""
+    private var scannedBarcodeId: String = ""
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         context = flutterPluginBinding.applicationContext
@@ -51,6 +52,7 @@ class FlutterDatalogicPlugin : FlutterPlugin, MethodCallHandler, EventChannel.St
             manager = BarcodeManager().also {
                 it.addReadListener{ result ->
                     scannedBarcode = result.text
+                    scannedBarcodeId = result.barcodeID.name
                 }
             }
 
@@ -137,7 +139,7 @@ class FlutterDatalogicPlugin : FlutterPlugin, MethodCallHandler, EventChannel.St
     }
 
     private fun listenScannerStatus() {
-        fun sendScannerInfo(status: ScannerStatus, barcode: String) {
+        fun sendScannerInfo(status: ScannerStatus, barcode: String, barcodeId: String) {
             Intent().also { intent ->
                 val bundle = Bundle().also {
                     it.putString(
@@ -148,6 +150,10 @@ class FlutterDatalogicPlugin : FlutterPlugin, MethodCallHandler, EventChannel.St
                         DLInterface.EXTRA_KEY_VALUE_SCAN_DATA,
                         barcode
                     )
+                    it.putString(
+                        DLInterface.EXTRA_KEY_VALUE_SCAN_DATA_ID,
+                        barcodeId
+                    )
                 }
 
                 intent.action = "${context.packageName}${DLInterface.ACTION_SCANNER_INFO}"
@@ -157,10 +163,10 @@ class FlutterDatalogicPlugin : FlutterPlugin, MethodCallHandler, EventChannel.St
         }
         manager?.addStartListener {
             scannedBarcode = ""
-            sendScannerInfo(ScannerStatus.SCANNING, scannedBarcode)
+            sendScannerInfo(ScannerStatus.SCANNING, scannedBarcode, scannedBarcodeId)
         }
         manager?.addStopListener {
-            sendScannerInfo(ScannerStatus.IDLE, scannedBarcode)
+            sendScannerInfo(ScannerStatus.IDLE, scannedBarcode, scannedBarcodeId)
         }
     }
 
