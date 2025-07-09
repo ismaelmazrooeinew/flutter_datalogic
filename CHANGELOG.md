@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.12] - 09th July 2025
+
+* Update setting for barcode type info like (UPC-A..), Fix error build
+
 ## [1.0.11] - 09th July 2025
 
 * Update setting for barcode type info like (EAN8, EAN13, ITF14..)
