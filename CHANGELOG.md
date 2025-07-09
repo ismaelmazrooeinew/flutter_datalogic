@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.12] - 09th July 2025
+## [1.0.12+12] - 09th July 2025
 
 * Update setting for barcode type info like (UPC-A..), Fix error build
 
