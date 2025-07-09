@@ -6,21 +6,21 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
+import com.datalogic.decode.BarcodeManager
+import com.datalogic.decode.DecodeException
+import com.datalogic.decode.PropertyID
+import com.datalogic.decode.configuration.LengthControlMode
+import com.datalogic.decode.configuration.ScanMode
+import com.datalogic.decode.configuration.ScannerProperties
+import com.datalogic.device.configuration.ConfigException
 import com.tusaamf.flutter_datalogic.const.MyChannels
-
+import com.tusaamf.flutter_datalogic.const.ScannerStatus
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
-import java.lang.Exception
-import com.datalogic.decode.BarcodeManager
-import com.datalogic.decode.DecodeException
-import com.datalogic.decode.configuration.ScanMode
-import com.datalogic.decode.configuration.ScannerProperties
-import com.datalogic.device.configuration.ConfigException
-import com.tusaamf.flutter_datalogic.const.ScannerStatus
+
 
 /** FlutterDatalogicPlugin */
 class FlutterDatalogicPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
@@ -67,8 +67,25 @@ class FlutterDatalogicPlugin : FlutterPlugin, MethodCallHandler, EventChannel.St
                 // https://datalogic.github.io/oemconfig/scanner-settings/#multi-scan
                 it.multiScan.enable.set(false)
                 // include the checksum in the label transmission
+                // https://datalogic.github.io/oemconfig/scanner-settings/#code-39
+                it.code39.enable.set(true)
+                // https://datalogic.github.io/oemconfig/scanner-settings/#code-128-gs1-128
+                it.code128.enable.set(true)
+                it.code128.gs1_128.set(true)
+                // https://datalogic.github.io/oemconfig/scanner-settings/#ean-8
+                it.ean8.enable.set(true)
+                it.ean8.sendChecksum.set(true)
                 // https://datalogic.github.io/oemconfig/scanner-settings/#ean-13
+                it.ean13.enable.set(true)
                 it.ean13.sendChecksum.set(true)
+                // https://datalogic.github.io/oemconfig/scanner-settings/#interleaved-2-of-5-itf-14
+                it.interleaved25.enable.set(true)
+                it.interleaved25.enableChecksum.set(true)
+                it.interleaved25.sendChecksum.set(true)
+                it.interleaved25.itf14.set(true)
+                it.interleaved25.lengthMode.set(LengthControlMode.ONE_FIXED)
+                it.interleaved25.Length1.set(14)
+                it.interleaved25.Length2.set(14)
                 // set default labelSuffix from [LF] to ""
                 // https://datalogic.github.io/oemconfig/scanner-settings/#formatting
                 it.format.labelSuffix.set("")
