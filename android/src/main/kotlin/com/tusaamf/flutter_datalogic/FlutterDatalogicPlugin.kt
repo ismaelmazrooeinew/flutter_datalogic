@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.util.Log
 import com.datalogic.decode.BarcodeManager
 import com.datalogic.decode.DecodeException
-import com.datalogic.decode.PropertyID
 import com.datalogic.decode.configuration.LengthControlMode
 import com.datalogic.decode.configuration.ScanMode
 import com.datalogic.decode.configuration.ScannerProperties
@@ -72,6 +71,10 @@ class FlutterDatalogicPlugin : FlutterPlugin, MethodCallHandler, EventChannel.St
                 // https://datalogic.github.io/oemconfig/scanner-settings/#code-128-gs1-128
                 it.code128.enable.set(true)
                 it.code128.gs1_128.set(true)
+                // https://datalogic.github.io/oemconfig/scanner-settings/#upc-a
+                it.upcA.enable.set(true)
+                it.upcA.sendChecksum.set(true)
+                it.upcA.convertToEan13.set(true)
                 // https://datalogic.github.io/oemconfig/scanner-settings/#ean-8
                 it.ean8.enable.set(true)
                 it.ean8.sendChecksum.set(true)
@@ -137,7 +140,7 @@ class FlutterDatalogicPlugin : FlutterPlugin, MethodCallHandler, EventChannel.St
         commandMethodChannel = MethodChannel(flutterPluginBinding.binaryMessenger, MyChannels.commandChannel)
         commandMethodChannel.setMethodCallHandler(this)
     }
-    override fun onMethodCall(call: MethodCall, result: Result) {
+    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "startScanning" -> {
                 manager?.pressTrigger()
