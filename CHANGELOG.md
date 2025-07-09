@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.11] - 09th July 2025
+
+* Update setting for barcode type info like (EAN8, EAN13, ITF14..)
+
 ## [1.0.10] - 20th June 2025
 
 * Return barcode type info like (EAN8, EAN13, ITF14..)
