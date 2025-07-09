@@ -3,3 +3,5 @@
 .idea/
 
 /android/.idea/
+
+pubspec.lock
