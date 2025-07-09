@@ -1,0 +1,9 @@
+# IntelliJ/Android Studio
+.idea/
+*.iml
+
+# Dart tool files
+.dart_tool/
+
+# Android-specific IDE settings
+android/.idea/
