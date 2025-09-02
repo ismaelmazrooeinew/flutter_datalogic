@@ -205,7 +205,7 @@ override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
 
     // برای اندروید 12 و بالاتر
     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-        context.registerReceiver(receiver, intentFilter, Context.RECEIVER_NOT_EXPORTED)
+        context.registerReceiver(receiver, intentFilter, Context.RECEIVER_EXPORTED)
     } else {
         context.registerReceiver(receiver, intentFilter)
     }
