@@ -28,190 +28,133 @@ class FlutterDatalogicPlugin : FlutterPlugin, MethodCallHandler, EventChannel.St
     private lateinit var commandMethodChannel: MethodChannel
 
     private var manager: BarcodeManager? = null
-
-    private var configuration: ScannerProperties? = null
-
-    /**
-     * Used to save BroadcastReceiver to be able unregister them.
-     */
-    private val registeredReceivers: ArrayList<SinkBroadcastReceiver> = ArrayList()
-
+    private var eventSink: EventSink? = null
     private lateinit var context: Context
-
-    private lateinit var intentFilter: IntentFilter
-
-    private var scannedBarcode: String = ""
-    private var scannedBarcodeId: String = ""
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         context = flutterPluginBinding.applicationContext
 
         try {
-            // Create a BarcodeManager. It will be used later to change intent delivery modes.
-            manager = BarcodeManager().also {
-                it.addReadListener{ result ->
-                    scannedBarcode = result.text
-                    scannedBarcodeId = result.barcodeID.name
-                }
-            }
+            // Initialize BarcodeManager
+            manager = BarcodeManager()
+            setupScannerConfiguration()
+            setupBarcodeListeners()
 
-            // get the current settings from the BarcodeManager
-            configuration = ScannerProperties.edit(manager)
+            // Setup channels
+            configureChannels(flutterPluginBinding)
 
-            configuration?.let {
-                // set scan mode only 'single'
-                // https://datalogic.github.io/oemconfig/scanner-settings/#scanner-options
-                it.scannerOptions.scanMode.set(ScanMode.SINGLE)
-                // set multi scan to false
-                // https://datalogic.github.io/oemconfig/scanner-settings/#multi-scan
-                it.multiScan.enable.set(false)
-                // include the checksum in the label transmission
-                // https://datalogic.github.io/oemconfig/scanner-settings/#code-39
-                it.code39.enable.set(true)
-                // https://datalogic.github.io/oemconfig/scanner-settings/#code-128-gs1-128
-                it.code128.enable.set(true)
-                it.code128.gs1_128.set(true)
-                // https://datalogic.github.io/oemconfig/scanner-settings/#upc-a
-                it.upcA.enable.set(true)
-                it.upcA.sendChecksum.set(true)
-                it.upcA.convertToEan13.set(true)
-                // https://datalogic.github.io/oemconfig/scanner-settings/#ean-8
-                it.ean8.enable.set(true)
-                it.ean8.sendChecksum.set(true)
-                // https://datalogic.github.io/oemconfig/scanner-settings/#ean-13
-                it.ean13.enable.set(true)
-                it.ean13.sendChecksum.set(true)
-                // https://datalogic.github.io/oemconfig/scanner-settings/#interleaved-2-of-5-itf-14
-                it.interleaved25.enable.set(true)
-                it.interleaved25.enableChecksum.set(true)
-                it.interleaved25.sendChecksum.set(true)
-                it.interleaved25.itf14.set(true)
-                it.interleaved25.lengthMode.set(LengthControlMode.ONE_FIXED)
-                it.interleaved25.Length1.set(14)
-                it.interleaved25.Length2.set(14)
-                // set default labelSuffix from [LF] to ""
-                // https://datalogic.github.io/oemconfig/scanner-settings/#formatting
-                it.format.labelSuffix.set("")
-                // save settings
-                it.store(manager, false)
-            }
-            listenScannerStatus()
-        } catch (e: Exception) { // Any error?
-            when (e) {
-                is ConfigException -> Log.e(
-                    LOG_TAG,
-                    "Error while retrieving/setting properties: " + e.error_number,
-                    e
-                )
-
-                is DecodeException -> Log.e(
-                    LOG_TAG,
-                    "Error while retrieving/setting properties: " + e.error_number,
-                    e
-                )
-
-                else -> Log.e(LOG_TAG, "Other error ", e)
-            }
-            e.printStackTrace()
-        }
-
-        registerIntentBroadcastReceiver(flutterPluginBinding)
-
-        configureMethodCallHandler(flutterPluginBinding)
-    }
-
-    private fun registerIntentBroadcastReceiver(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        try {
-            // Register dynamically decode wedge intent broadcast receiver.
-            intentFilter = IntentFilter().also {
-                it.addAction("${context.packageName}${DLInterface.ACTION_SCANNER_INFO}")
-            }
-
-            scanEventChannel =
-                EventChannel(flutterPluginBinding.binaryMessenger, MyChannels.scanChannel)
-            scanEventChannel.setStreamHandler(this)
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "Error while register intent broadcast receiver", e)
-            e.printStackTrace()
+            Log.e(LOG_TAG, "Error initializing plugin", e)
         }
     }
 
-    private fun configureMethodCallHandler(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+    private fun setupScannerConfiguration() {
+        try {
+            val config = ScannerProperties.edit(manager)
+            
+            // Basic scanner settings
+            config.scannerOptions.scanMode.set(ScanMode.SINGLE)
+            config.multiScan.enable.set(false)
+            config.format.labelSuffix.set("")
+            
+            // Barcode types
+            config.code39.enable.set(true)
+            config.code128.enable.set(true)
+            config.code128.gs1_128.set(true)
+            config.upcA.enable.set(true)
+            config.ean8.enable.set(true)
+            config.ean13.enable.set(true)
+            config.interleaved25.enable.set(true)
+            
+            config.store(manager, false)
+            
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Error configuring scanner", e)
+        }
+    }
+
+    private fun setupBarcodeListeners() {
+        manager?.addReadListener { result ->
+            // مستقیماً به Flutter ارسال کنید
+            val scanData = mapOf(
+                "eventName" to "scannerInfo",
+                "status" to "SCANNED",
+                "scanData" to result.text,
+                "scanDataId" to result.barcodeID.name
+            )
+            
+            // ارسال مستقیم به Flutter بدون استفاده از Broadcast
+            eventSink?.success(scanData)
+        }
+
+        manager?.addStartListener {
+            val statusData = mapOf(
+                "eventName" to "scannerInfo",
+                "status" to "SCANNING",
+                "scanData" to "",
+                "scanDataId" to ""
+            )
+            eventSink?.success(statusData)
+        }
+
+        manager?.addStopListener {
+            val statusData = mapOf(
+                "eventName" to "scannerInfo", 
+                "status" to "IDLE",
+                "scanData" to "",
+                "scanDataId" to ""
+            )
+            eventSink?.success(statusData)
+        }
+    }
+
+    private fun configureChannels(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        // Event Channel for scan data
+        scanEventChannel = EventChannel(flutterPluginBinding.binaryMessenger, MyChannels.scanChannel)
+        scanEventChannel.setStreamHandler(this)
+
+        // Method Channel for commands
         commandMethodChannel = MethodChannel(flutterPluginBinding.binaryMessenger, MyChannels.commandChannel)
         commandMethodChannel.setMethodCallHandler(this)
     }
+
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "startScanning" -> {
-                manager?.pressTrigger()
-                result.success(null)
+                try {
+                    manager?.pressTrigger()
+                    result.success(true)
+                } catch (e: Exception) {
+                    result.error("START_SCAN_ERROR", "Failed to start scanning", e.message)
+                }
             }
 
             "stopScanning" -> {
-                manager?.releaseTrigger()
-                result.success(null)
+                try {
+                    manager?.releaseTrigger()
+                    result.success(true)
+                } catch (e: Exception) {
+                    result.error("STOP_SCAN_ERROR", "Failed to stop scanning", e.message)
+                }
             }
 
-            else -> {
-                result.notImplemented()
-            }
+            else -> result.notImplemented()
         }
     }
 
-    private fun listenScannerStatus() {
-        fun sendScannerInfo(status: ScannerStatus, barcode: String, barcodeId: String) {
-            Intent().also { intent ->
-                val bundle = Bundle().also {
-                    it.putString(
-                        DLInterface.EXTRA_KEY_VALUE_SCANNER_STATUS,
-                        status.toString()
-                    )
-                    it.putString(
-                        DLInterface.EXTRA_KEY_VALUE_SCAN_DATA,
-                        barcode
-                    )
-                    it.putString(
-                        DLInterface.EXTRA_KEY_VALUE_SCAN_DATA_ID,
-                        barcodeId
-                    )
-                }
+    override fun onListen(arguments: Any?, events: EventSink?) {
+        eventSink = events
+    }
 
-                intent.action = "${context.packageName}${DLInterface.ACTION_SCANNER_INFO}"
-                intent.putExtra("${context.packageName}${DLInterface.EXTRA_SCANNER_INFO}", bundle)
-                context.sendBroadcast(intent)
-            }
-        }
-        manager?.addStartListener {
-            scannedBarcode = ""
-            sendScannerInfo(ScannerStatus.SCANNING, scannedBarcode, scannedBarcodeId)
-        }
-        manager?.addStopListener {
-            sendScannerInfo(ScannerStatus.IDLE, scannedBarcode, scannedBarcodeId)
-        }
+    override fun onCancel(arguments: Any?) {
+        eventSink = null
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        for (receiver in registeredReceivers) {
-            context.unregisterReceiver(receiver)
-        }
+        manager?.releaseTrigger()
         commandMethodChannel.setMethodCallHandler(null)
         scanEventChannel.setStreamHandler(null)
-    }
-
-@SuppressLint("UnspecifiedRegisterReceiverFlag")
-override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-    val receiver = SinkBroadcastReceiver(events)
-    registeredReceivers.add(receiver)
-
-    // برای اندروید 12 و بالاتر
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-        context.registerReceiver(receiver, intentFilter, Context.RECEIVER_EXPORTED)
-    } else {
-        context.registerReceiver(receiver, intentFilter)
-    }
-}
-
-    override fun onCancel(arguments: Any?) {
+        eventSink = null
     }
 
     companion object {
