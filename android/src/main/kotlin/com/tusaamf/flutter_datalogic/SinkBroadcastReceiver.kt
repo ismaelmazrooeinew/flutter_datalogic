@@ -13,36 +13,44 @@ import org.json.JSONObject
 class SinkBroadcastReceiver(private var events: EventSink? = null) : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        when (intent.action) {
-            ///  A scan info has been changed/scanned
-            "${context.packageName}${DLInterface.ACTION_SCANNER_INFO}" -> {
-                val extraKey = "${context.packageName}${DLInterface.EXTRA_SCANNER_INFO}"
-                if (intent.hasExtra(extraKey)) {
-                    intent.getBundleExtra(extraKey)?.let {
-                        handleScannerStatus(it)
+        try {
+            when (intent.action) {
+                "${context.packageName}${DLInterface.ACTION_SCANNER_INFO}" -> {
+                    val extraKey = "${context.packageName}${DLInterface.EXTRA_SCANNER_INFO}"
+                    if (intent.hasExtra(extraKey)) {
+                        intent.getBundleExtra(extraKey)?.let { bundle ->
+                            handleScannerStatus(bundle)
+                        } ?: run {
+                            Log.w(TAG, "Bundle is null for key: $extraKey")
+                        }
                     }
                 }
+                else -> {
+                    Log.d(TAG, "Unhandled action: ${intent.action}")
+                }
             }
-
-            else -> {
-                Log.d(TAG, "default_case")
-            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in onReceive", e)
         }
     }
 
-    private fun handleScannerStatus(b: Bundle) {
-        val status =
-            b.getString(DLInterface.EXTRA_KEY_VALUE_SCANNER_STATUS)
-        val scanData =
-            b.getString(DLInterface.EXTRA_KEY_VALUE_SCAN_DATA)
-        val scanDataId =
-            b.getString(DLInterface.EXTRA_KEY_VALUE_SCAN_DATA_ID)
-        val scanResult = JSONObject()
-        scanResult.put(MyEvents.EVENT_NAME, MyEvents.SCANNER_INFO)
-        scanResult.put("status", status)
-        scanResult.put("scanData", scanData)
-        scanResult.put("scanDataId", scanDataId)
+    private fun handleScannerStatus(bundle: Bundle) {
+        try {
+            val status = bundle.getString(DLInterface.EXTRA_KEY_VALUE_SCANNER_STATUS) ?: ""
+            val scanData = bundle.getString(DLInterface.EXTRA_KEY_VALUE_SCAN_DATA) ?: ""
+            val scanDataId = bundle.getString(DLInterface.EXTRA_KEY_VALUE_SCAN_DATA_ID) ?: ""
+            
+            val scanResult = JSONObject().apply {
+                put(MyEvents.EVENT_NAME, MyEvents.SCANNER_INFO)
+                put("status", status)
+                put("scanData", scanData)
+                put("scanDataId", scanDataId)
+            }
 
-        events!!.success(scanResult.toString())
+            events?.success(scanResult.toString()) ?: Log.w(TAG, "EventSink is null")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error handling scanner status", e)
+        }
     }
 }
